@@ -17,8 +17,11 @@ extern const sli_bt_gattdb_t gattdb;
 #define gattdb_device_information             14
 #define gattdb_manufacturer_name_string       16
 #define gattdb_system_id                      18
-#define gattdb_ota                            19
-#define gattdb_ota_control                    21
+#define gattdb_SoilHum                        19
+#define gattdb_SoilHumData                    21
+#define gattdb_SoilHumTrigLevel               25
+#define gattdb_ota                            27
+#define gattdb_ota_control                    29
 
 
 #endif // __GATT_DB_H

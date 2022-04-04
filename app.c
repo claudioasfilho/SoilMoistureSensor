@@ -48,6 +48,11 @@
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 
+typedef union {
+
+        uint32_t data;
+        uint8_t array[4];
+}VALUEARRAY;
 
 
 /*******************************************************************************
@@ -199,32 +204,6 @@ void IADC_IRQHandler(void)
   sl_bt_external_signal(1);
 }
 
-///**************************************************************************//**
-// * @brief  Main function
-// *****************************************************************************/
-//int test(void)
-//{
-////  CHIP_Init();
-////
-////  // Initialize GPIO
-////  initGPIO();
-////
-////  // Initialize PRS
-////  initPRS();
-////
-////  // Initialize the IADC
-////  initIADC();
-////
-////  // Start single
-////  IADC_command(IADC0, iadcCmdStartSingle);
-////
-////  while (1)
-////  {
-////    // Enter EM2 sleep, woken by IADC interrupt
-////    EMU_EnterEM2(true);
-////  }
-//}
-
 /**************************************************************************//**
  * Application Init.
  *****************************************************************************/
@@ -274,6 +253,10 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
   bd_addr address;
   uint8_t address_type;
   uint8_t system_id[8];
+
+
+  uint8_t data_send[4];
+  VALUEARRAY data_send2;
 
   switch (SL_BT_MSG_ID(evt->header)) {
     // -------------------------------
@@ -325,14 +308,36 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
 
     case sl_bt_evt_system_external_signal_id:
+
+
           // Handle GPIO IRQ and do something
     // External signal command’s parameter can be accessed using
 
-      app_log("interrupt Context \n\r");
+      //app_log("interrupt Context \n\r");
 
      if( evt->data.evt_system_external_signal.extsignals == 1)
        {
-         app_log("Raw = %d, Voltage = %f \n\r", sample, (float)singleResult);
+
+         app_log("Raw Sensor Value = %d\n\r", sample.data);
+
+         data_send2.data = sample.data;
+
+        // data_send[1] = (uint16_t)sample.data>>8;
+        // data_send[0] = (uint8_t)sample.data;
+
+        // app_log("Raw Sensor Value = %d\n\r", (uint16_t)data_send[1]&data_send[0]);
+
+         // Write attribute in the local GATT database.
+//           sc = sl_bt_gatt_server_write_attribute_value(gattdb_SoilHumData,
+//                                                        0,
+//                                                        sizeof(data_send),
+//                                                        &data_send);
+         sc = sl_bt_gatt_server_write_attribute_value(gattdb_SoilHumData,
+                                                      0,
+                                                      sizeof(data_send2.array),
+                                                      data_send2.array);
+         app_assert_status(sc);
+
        }
     break;
 
