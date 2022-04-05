@@ -52,7 +52,7 @@ typedef union {
 
         uint32_t data;
         uint8_t array[4];
-}VALUEARRAY;
+}_32BArray_Union_t;
 
 
 /*******************************************************************************
@@ -61,17 +61,17 @@ typedef union {
 
 // Set CLK_ADC to 10MHz (this corresponds to a sample rate of 77K with OSR = 32)
 // CLK_SRC_ADC; largest division is by 4
-#define CLK_SRC_ADC_FREQ        4000
+#define CLK_SRC_ADC_FREQ        40//4000
 
 // CLK_ADC; IADC_SCHEDx PRESCALE has 10 valid bits
-#define CLK_ADC_FREQ            1000
+#define CLK_ADC_FREQ            10//1000
 
 // When changing GPIO port/pins above, make sure to change xBUSALLOC macro's
 // accordingly.
 #define IADC_INPUT_BUS          CDBUSALLOC
 #define IADC_INPUT_BUSALLOC     GPIO_CDBUSALLOC_CDEVEN0_ADC0
 
-#define ADC_INT 0xaaaa
+#define ADC_INT_IRQ 0xaaaa
 
 /*******************************************************************************
  ***************************   GLOBAL VARIABLES   ******************************
@@ -201,7 +201,7 @@ void IADC_IRQHandler(void)
 
   IADC_clearInt(IADC0, IADC_IF_SINGLEFIFODVL);
 
-  sl_bt_external_signal(1);
+  sl_bt_external_signal(ADC_INT_IRQ);
 }
 
 /**************************************************************************//**
@@ -255,8 +255,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
   uint8_t system_id[8];
 
 
-  uint8_t data_send[4];
-  VALUEARRAY data_send2;
+
+  _32BArray_Union_t Sensor_data;
 
   switch (SL_BT_MSG_ID(evt->header)) {
     // -------------------------------
@@ -310,35 +310,25 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     case sl_bt_evt_system_external_signal_id:
 
 
-          // Handle GPIO IRQ and do something
-    // External signal command’s parameter can be accessed using
+     //ADC IRQ Handler
 
-      //app_log("interrupt Context \n\r");
-
-     if( evt->data.evt_system_external_signal.extsignals == 1)
+     if( evt->data.evt_system_external_signal.extsignals == ADC_INT_IRQ)
        {
 
          app_log("Raw Sensor Value = %d\n\r", sample.data);
 
-         data_send2.data = sample.data;
+         Sensor_data.data = sample.data;
 
-        // data_send[1] = (uint16_t)sample.data>>8;
-        // data_send[0] = (uint8_t)sample.data;
-
-        // app_log("Raw Sensor Value = %d\n\r", (uint16_t)data_send[1]&data_send[0]);
-
-         // Write attribute in the local GATT database.
-//           sc = sl_bt_gatt_server_write_attribute_value(gattdb_SoilHumData,
-//                                                        0,
-//                                                        sizeof(data_send),
-//                                                        &data_send);
+         //Writes ADC Data to the Gattdb Characteristic
          sc = sl_bt_gatt_server_write_attribute_value(gattdb_SoilHumData,
                                                       0,
-                                                      sizeof(data_send2.array),
-                                                      data_send2.array);
+                                                      sizeof(Sensor_data.array),
+                                                      Sensor_data.array);
          app_assert_status(sc);
 
        }
+     //End of ADC IRQ Handler
+
     break;
 
     // -------------------------------
