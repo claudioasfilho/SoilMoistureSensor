@@ -54,6 +54,7 @@ typedef union {
         uint8_t array[4];
 }_32BArray_Union_t;
 
+#define IADC_SOFTTIMER_HANDLER 0xFE
 
 /*******************************************************************************
  *******************************   DEFINES   ***********************************
@@ -90,7 +91,8 @@ void initGPIO(void)
   CMU_ClockEnable(cmuClock_GPIO, true);
 
   // Configure PB1 as output, will indicate when conversions are being performed
-  GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
+  GPIO_PinModeSet(gpioPortC, 0, gpioModePushPull, 0);
+  GPIO_PinModeSet(gpioPortC, 1, gpioModePushPull, 0);
 }
 
 /**************************************************************************//**
@@ -106,7 +108,7 @@ void initPRS(void)
                            PRS_ASYNC_CH_CTRL_SIGSEL_IADC0SINGLEDONE);
 
   // Route PRS channel 0 to PB1 to indicate a conversion complete
-  PRS_PinOutput(0,prsTypeAsync, gpioPortB, 1);
+  PRS_PinOutput(0,prsTypeAsync, gpioPortC, 1);
 }
 
 /**************************************************************************//**
@@ -156,7 +158,7 @@ void initIADC(void)
   initSingle.dataValidLevel = _IADC_SINGLEFIFOCFG_DVL_VALID1;
 
   // Set conversions to run continuously
-  initSingle.triggerAction = iadcTriggerActionContinuous;
+  initSingle.triggerAction = iadcTriggerActionOnce;//iadcTriggerActionContinuous; //
 
   // Set alignment to right justified with 16 bits for data field
   initSingle.alignment = iadcAlignRight16;
@@ -189,6 +191,7 @@ void initIADC(void)
  *****************************************************************************/
 void IADC_IRQHandler(void)
 {
+  GPIO_PinOutClear(gpioPortC, 0);
   // Read data from the FIFO, 16-bit result
   sample = IADC_pullSingleFifoResult(IADC0);
 
@@ -304,6 +307,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         sl_bt_advertiser_connectable_scannable);
       app_assert_status(sc);
       app_log("advertising \n\r");
+      //Set a continuous Timer to drive the Central App State Machine
+            sl_bt_system_set_soft_timer(1*32768, IADC_SOFTTIMER_HANDLER, 0);
       break;
 
 
@@ -331,6 +336,16 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
     break;
 
+
+    case sl_bt_evt_system_soft_timer_id:
+
+    if (evt->data.evt_system_soft_timer.handle == IADC_SOFTTIMER_HANDLER)
+           {
+              GPIO_PinOutSet(gpioPortC, 0);
+              IADC_command(IADC0,iadcCmdStartSingle);
+              app_log("triggering ADC \n\r");
+           }
+    break;
     // -------------------------------
     // This event indicates that a new connection was opened.
     case sl_bt_evt_connection_opened_id:
