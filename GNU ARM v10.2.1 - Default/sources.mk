@@ -19,7 +19,6 @@ SUBDIRS := \
 . \
 autogen \
 gecko_sdk_4.0.2/app/bluetooth/common/ota_dfu \
-gecko_sdk_4.0.2/app/common/util/app_log \
 gecko_sdk_4.0.2/hardware/board/src \
 gecko_sdk_4.0.2/hardware/driver/mx25_flash_shutdown/src/sl_mx25_flash_shutdown_usart \
 gecko_sdk_4.0.2/platform/Device/SiliconLabs/EFR32BG22/Source/GCC \
@@ -34,7 +33,6 @@ gecko_sdk_4.0.2/platform/radio/rail_lib/plugin/pa-conversions \
 gecko_sdk_4.0.2/platform/radio/rail_lib/plugin/rail_util_pti \
 gecko_sdk_4.0.2/platform/service/device_init/src \
 gecko_sdk_4.0.2/platform/service/hfxo_manager/src \
-gecko_sdk_4.0.2/platform/service/iostream/src \
 gecko_sdk_4.0.2/platform/service/mpu/src \
 gecko_sdk_4.0.2/platform/service/power_manager/src \
 gecko_sdk_4.0.2/platform/service/sleeptimer/src \

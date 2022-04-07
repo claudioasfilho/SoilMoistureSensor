@@ -84,11 +84,7 @@ autogen/sl_power_manager_handler.o: ../autogen/sl_power_manager_handler.c \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/radio/rail_lib/common/rail_types.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bgapi.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api_compatibility.h \
- ../autogen/sl_iostream_init_eusart_instances.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream_uart.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h
+ /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api_compatibility.h
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/common/toolchain/inc/sl_gcc_preinclude.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_core.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/Device/SiliconLabs/EFR32BG22/Include/em_device.h:
@@ -175,7 +171,3 @@ autogen/sl_power_manager_handler.o: ../autogen/sl_power_manager_handler.c \
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bgapi.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api_compatibility.h:
-../autogen/sl_iostream_init_eusart_instances.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream_uart.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h:

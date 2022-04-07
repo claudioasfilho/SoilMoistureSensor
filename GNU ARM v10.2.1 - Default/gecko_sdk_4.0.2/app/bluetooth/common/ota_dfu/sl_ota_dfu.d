@@ -90,13 +90,6 @@ gecko_sdk_4.0.2/app/bluetooth/common/ota_dfu/sl_ota_dfu.o: \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sli_bt_gattdb_def.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//app/common/util/app_assert/app_assert.h \
  /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/app_assert_config.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//app/common/util/app_log/app_log.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h \
- /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_iostream_handles.h \
- /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_iostream_init_eusart_instances.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream_uart.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h \
- /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/app_log_config.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2/app/bluetooth/common/ota_dfu/sl_ota_dfu.h
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/common/toolchain/inc/sl_gcc_preinclude.h:
 /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_bluetooth.h:
@@ -188,11 +181,4 @@ gecko_sdk_4.0.2/app/bluetooth/common/ota_dfu/sl_ota_dfu.o: \
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sli_bt_gattdb_def.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//app/common/util/app_assert/app_assert.h:
 /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/app_assert_config.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//app/common/util/app_log/app_log.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h:
-/Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_iostream_handles.h:
-/Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_iostream_init_eusart_instances.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream_uart.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h:
-/Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/app_log_config.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2/app/bluetooth/common/ota_dfu/sl_ota_dfu.h:

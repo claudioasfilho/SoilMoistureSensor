@@ -226,7 +226,7 @@ SL_WEAK void app_init(void)
 //  // Initialize the IADC
   initIADC();
 //
-  app_log("ADC Initialized\n\r");
+  //app_log("ADC Initialized\n\r");
 //
 //  // Start single
   IADC_command(IADC0, iadcCmdStartSingle);
@@ -267,7 +267,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     // Do not call any stack command before receiving this boot event!
     case sl_bt_evt_system_boot_id:
 
-      app_log("device boots \n\r");
+      //app_log("device boots \n\r");
       // Extract unique ID from BT Address.
       sc = sl_bt_system_get_identity_address(&address, &address_type);
       app_assert_status(sc);
@@ -306,7 +306,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         sl_bt_advertiser_general_discoverable,
         sl_bt_advertiser_connectable_scannable);
       app_assert_status(sc);
-      app_log("advertising \n\r");
+      //app_log("advertising \n\r");
       //Set a continuous Timer to drive the Central App State Machine
             sl_bt_system_set_soft_timer(1*32768, IADC_SOFTTIMER_HANDLER, 0);
       break;
@@ -320,7 +320,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
      if( evt->data.evt_system_external_signal.extsignals == ADC_INT_IRQ)
        {
 
-         app_log("Raw Sensor Value = %d\n\r", sample.data);
+         //app_log("Raw Sensor Value = %d\n\r", sample.data);
 
          Sensor_data.data = sample.data;
 
@@ -343,7 +343,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
            {
               GPIO_PinOutSet(gpioPortC, 0);
               IADC_command(IADC0,iadcCmdStartSingle);
-              app_log("triggering ADC \n\r");
+              //app_log("triggering ADC \n\r");
            }
     break;
     // -------------------------------

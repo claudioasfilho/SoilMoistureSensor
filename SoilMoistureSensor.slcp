@@ -20,7 +20,6 @@ sdk: {id: gecko_sdk, version: 4.0.2}
 toolchain_settings: []
 component:
 - {id: emlib_iadc}
-- {id: app_log}
 - {id: bluetooth_feature_connection}
 - {id: bluetooth_feature_gatt_server}
 - {id: bluetooth_feature_advertiser}
@@ -34,8 +33,6 @@ component:
 - {id: ota_dfu}
 - {id: brd4184a}
 - {id: bootloader_interface}
-- instance: [vcom]
-  id: iostream_eusart
 - {id: rail_util_pti}
 - {id: app_assert}
 - {id: bluetooth_feature_gatt}

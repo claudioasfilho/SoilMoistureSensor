@@ -90,19 +90,12 @@ autogen/sl_event_handler.o: ../autogen/sl_event_handler.c \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/common/inc/sl_enum.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/sleeptimer/inc/sl_sleeptimer.h \
  /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_sleeptimer_config.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//app/common/util/app_log/app_log.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h \
- /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_iostream_handles.h \
- /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_iostream_init_eusart_instances.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream_uart.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h \
+ ../autogen/sl_bluetooth.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/power_manager/inc/sl_power_manager.h \
  /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_power_manager_config.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_core.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/common/inc/sl_slist.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_emu.h \
- /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/app_log_config.h \
- ../autogen/sl_bluetooth.h \
  /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_bluetooth_config.h \
  /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_bluetooth_connection_config.h \
  /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_bluetooth_advertiser_config.h \
@@ -111,8 +104,6 @@ autogen/sl_event_handler.o: ../autogen/sl_event_handler.c \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bgapi.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api_compatibility.h \
- ../autogen/sl_iostream_init_eusart_instances.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream_stdlib_config.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//util/third_party/crypto/sl_component/sl_mbedtls_support/inc/sl_mbedtls.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/mpu/inc/sl_mpu.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emdrv/nvm3/inc/nvm3_default.h \
@@ -121,8 +112,7 @@ autogen/sl_event_handler.o: ../autogen/sl_event_handler.c \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emdrv/common/inc/ecode.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_assert.h \
  /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_common.h \
- /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emdrv/nvm3/inc/nvm3_default.h \
- ../autogen/sl_iostream_init_instances.h
+ /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emdrv/nvm3/inc/nvm3_default.h
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/common/toolchain/inc/sl_gcc_preinclude.h:
 ../autogen/sl_event_handler.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_chip.h:
@@ -214,19 +204,12 @@ autogen/sl_event_handler.o: ../autogen/sl_event_handler.c \
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/common/inc/sl_enum.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/sleeptimer/inc/sl_sleeptimer.h:
 /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_sleeptimer_config.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//app/common/util/app_log/app_log.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h:
-/Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_iostream_handles.h:
-/Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/autogen/sl_iostream_init_eusart_instances.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream_uart.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream.h:
+../autogen/sl_bluetooth.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/power_manager/inc/sl_power_manager.h:
 /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_power_manager_config.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_core.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/common/inc/sl_slist.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_emu.h:
-/Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/app_log_config.h:
-../autogen/sl_bluetooth.h:
 /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_bluetooth_config.h:
 /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_bluetooth_connection_config.h:
 /Users/clfilho/SimplicityStudio/v5_workspace/SoilMoistureSensor/config/sl_bluetooth_advertiser_config.h:
@@ -235,8 +218,6 @@ autogen/sl_event_handler.o: ../autogen/sl_event_handler.c \
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bgapi.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//protocol/bluetooth/inc/sl_bt_api_compatibility.h:
-../autogen/sl_iostream_init_eusart_instances.h:
-/Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/iostream/inc/sl_iostream_stdlib_config.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//util/third_party/crypto/sl_component/sl_mbedtls_support/inc/sl_mbedtls.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/service/mpu/inc/sl_mpu.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emdrv/nvm3/inc/nvm3_default.h:
@@ -246,4 +227,3 @@ autogen/sl_event_handler.o: ../autogen/sl_event_handler.c \
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_assert.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emlib/inc/em_common.h:
 /Users/clfilho/SimplicityStudio/SDKs/gecko_sdk2//platform/emdrv/nvm3/inc/nvm3_default.h:
-../autogen/sl_iostream_init_instances.h:

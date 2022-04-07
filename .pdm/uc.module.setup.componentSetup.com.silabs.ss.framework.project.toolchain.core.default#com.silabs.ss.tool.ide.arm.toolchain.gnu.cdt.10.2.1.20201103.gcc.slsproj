@@ -146,22 +146,6 @@
             <file name="sli_hfxo_manager.h" uri="studio:/sdk/platform/service/hfxo_manager/inc/sli_hfxo_manager.h"/>
           </folder>
         </folder>
-        <folder name="iostream">
-          <folder name="src">
-            <file name="sl_iostream.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream.c"/>
-            <file name="sl_iostream_eusart.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_eusart.c"/>
-            <file name="sl_iostream_retarget_stdio.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_retarget_stdio.c"/>
-            <file name="sl_iostream_stdlib_config.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_stdlib_config.c"/>
-            <file name="sl_iostream_uart.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_uart.c"/>
-          </folder>
-          <folder name="inc">
-            <file name="sl_iostream.h" uri="studio:/sdk/platform/service/iostream/inc/sl_iostream.h"/>
-            <file name="sl_iostream_eusart.h" uri="studio:/sdk/platform/service/iostream/inc/sl_iostream_eusart.h"/>
-            <file name="sl_iostream_stdlib_config.h" uri="studio:/sdk/platform/service/iostream/inc/sl_iostream_stdlib_config.h"/>
-            <file name="sl_iostream_uart.h" uri="studio:/sdk/platform/service/iostream/inc/sl_iostream_uart.h"/>
-            <file name="sli_iostream_uart.h" uri="studio:/sdk/platform/service/iostream/inc/sli_iostream_uart.h"/>
-          </folder>
-        </folder>
         <folder name="mpu">
           <folder name="src">
             <file name="sl_mpu.c" uri="studio:/sdk/platform/service/mpu/src/sl_mpu.c"/>
@@ -247,7 +231,6 @@
           <file name="em_assert.c" uri="studio:/sdk/platform/emlib/src/em_assert.c"/>
           <file name="em_core.c" uri="studio:/sdk/platform/emlib/src/em_core.c"/>
           <file name="em_emu.c" uri="studio:/sdk/platform/emlib/src/em_emu.c"/>
-          <file name="em_eusart.c" uri="studio:/sdk/platform/emlib/src/em_eusart.c"/>
           <file name="em_gpio.c" uri="studio:/sdk/platform/emlib/src/em_gpio.c"/>
           <file name="em_iadc.c" uri="studio:/sdk/platform/emlib/src/em_iadc.c"/>
           <file name="em_msc.c" uri="studio:/sdk/platform/emlib/src/em_msc.c"/>
@@ -269,8 +252,6 @@
           <file name="em_version.h" uri="studio:/sdk/platform/emlib/inc/em_version.h"/>
           <file name="em_core.h" uri="studio:/sdk/platform/emlib/inc/em_core.h"/>
           <file name="em_emu.h" uri="studio:/sdk/platform/emlib/inc/em_emu.h"/>
-          <file name="em_eusart.h" uri="studio:/sdk/platform/emlib/inc/em_eusart.h"/>
-          <file name="em_eusart_compat.h" uri="studio:/sdk/platform/emlib/inc/em_eusart_compat.h"/>
           <file name="em_gpio.h" uri="studio:/sdk/platform/emlib/inc/em_gpio.h"/>
           <file name="em_iadc.h" uri="studio:/sdk/platform/emlib/inc/em_iadc.h"/>
           <file name="em_msc.h" uri="studio:/sdk/platform/emlib/inc/em_msc.h"/>
@@ -339,11 +320,6 @@
           <folder name="app_assert">
             <file name="app_assert.h" uri="studio:/sdk/app/common/util/app_assert/app_assert.h"/>
             <file name="sl_app_assert.h" uri="studio:/sdk/app/common/util/app_assert/sl_app_assert.h"/>
-          </folder>
-          <folder name="app_log">
-            <file name="app_log.c" uri="studio:/sdk/app/common/util/app_log/app_log.c"/>
-            <file name="app_log.h" uri="studio:/sdk/app/common/util/app_log/app_log.h"/>
-            <file name="sl_app_log.h" uri="studio:/sdk/app/common/util/app_log/sl_app_log.h"/>
           </folder>
         </folder>
       </folder>
@@ -711,7 +687,6 @@
   <includePath uri="studio:/project/"/>
   <includePath uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG22/Include"/>
   <includePath uri="studio:/sdk/app/common/util/app_assert"/>
-  <includePath uri="studio:/sdk/app/common/util/app_log"/>
   <includePath uri="studio:/sdk/platform/common/inc"/>
   <includePath uri="studio:/sdk/protocol/bluetooth/inc"/>
   <includePath uri="studio:/sdk/hardware/board/inc"/>
@@ -724,7 +699,6 @@
   <includePath uri="studio:/sdk/platform/emlib/inc"/>
   <includePath uri="studio:/sdk/platform/emlib/host/inc"/>
   <includePath uri="studio:/sdk/platform/service/hfxo_manager/inc"/>
-  <includePath uri="studio:/sdk/platform/service/iostream/inc"/>
   <includePath uri="studio:/sdk/util/third_party/crypto/sl_component/sl_mbedtls_support/config"/>
   <includePath uri="studio:/sdk/util/third_party/crypto/mbedtls/include"/>
   <includePath uri="studio:/sdk/util/third_party/crypto/mbedtls/library"/>
