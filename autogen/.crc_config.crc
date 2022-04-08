@@ -12,6 +12,7 @@ sl_bluetooth_advertiser_config.h=1929044723
 sl_bluetooth_config.h=2104223636
 sl_bluetooth_connection_config.h=2103279102
 sl_board_control_config.h=-436878843
+sl_bt_power_control_config.h=-2120375005
 sl_device_init_dcdc_config.h=863711575
 sl_device_init_emu_config.h=1238190016
 sl_device_init_hfxo_config.h=101953940

@@ -32,205 +32,10 @@
 #include "sl_bluetooth.h"
 #include "gatt_db.h"
 #include "app.h"
-
-
-//IADC
-
-#include <stdio.h>
-#include "em_device.h"
-#include "em_chip.h"
-#include "em_cmu.h"
-#include "em_emu.h"
-#include "em_iadc.h"
-#include "em_gpio.h"
-#include "em_prs.h"
+#include "SoilMoisture.h"
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
-
-typedef union {
-
-        uint32_t data;
-        uint8_t array[4];
-}_32BArray_Union_t;
-
-#define IADC_SOFTTIMER_HANDLER 0xFE
-
-/*******************************************************************************
- *******************************   DEFINES   ***********************************
- ******************************************************************************/
-
-// Set CLK_ADC to 10MHz (this corresponds to a sample rate of 77K with OSR = 32)
-// CLK_SRC_ADC; largest division is by 4
-#define CLK_SRC_ADC_FREQ        40//4000
-
-// CLK_ADC; IADC_SCHEDx PRESCALE has 10 valid bits
-#define CLK_ADC_FREQ            10//1000
-
-// When changing GPIO port/pins above, make sure to change xBUSALLOC macro's
-// accordingly.
-#define IADC_INPUT_BUS          CDBUSALLOC
-#define IADC_INPUT_BUSALLOC     GPIO_CDBUSALLOC_CDEVEN0_ADC0
-
-#define ADC_INT_IRQ 0xaaaa
-
-/*******************************************************************************
- ***************************   GLOBAL VARIABLES   ******************************
- ******************************************************************************/
-
-// Stores latest ADC sample and converts to volts
-static volatile IADC_Result_t sample;
-static volatile double singleResult;
-
-/**************************************************************************//**
- * @brief  GPIO Initializer
- *****************************************************************************/
-void initGPIO(void)
-{
-  // Enable GPIO clock branch
-  CMU_ClockEnable(cmuClock_GPIO, true);
-
-  // Configure PB1 as output, will indicate when conversions are being performed
-  GPIO_PinModeSet(gpioPortC, 0, gpioModePushPull, 0);
-  GPIO_PinModeSet(gpioPortC, 1, gpioModePushPull, 0);
-}
-
-/**************************************************************************//**
- * @brief  PRS Initializer
- *****************************************************************************/
-void initPRS(void)
-{
-  // Enable PRS clock
-  CMU_ClockEnable(cmuClock_PRS, true);
-
-  // Connect PRS Async channel 0 to ADC single complete signal
-  PRS_SourceAsyncSignalSet(0, PRS_ASYNC_CH_CTRL_SOURCESEL_IADC0,
-                           PRS_ASYNC_CH_CTRL_SIGSEL_IADC0SINGLEDONE);
-
-  // Route PRS channel 0 to PB1 to indicate a conversion complete
-  PRS_PinOutput(0,prsTypeAsync, gpioPortC, 1);
-}
-
-/**************************************************************************//**
- * @brief  IADC Initializer
- *****************************************************************************/
-void initIADC(void)
-{
-  // Declare init structs
-  IADC_Init_t init = IADC_INIT_DEFAULT;
-  IADC_AllConfigs_t initAllConfigs = IADC_ALLCONFIGS_DEFAULT;
-  IADC_InitSingle_t initSingle = IADC_INITSINGLE_DEFAULT;
-  IADC_SingleInput_t initSingleInput = IADC_SINGLEINPUT_DEFAULT;
-
-  // Enable IADC clock
-  CMU_ClockEnable(cmuClock_IADC0, true);
-
-  // Reset IADC to reset configuration in case it has been modified
-  IADC_reset(IADC0);
-
-  // Configure IADC clock source for use while in EM2
-//  CMU_ClockSelectSet(cmuClock_IADCCLK, cmuSelect_FSRCO);
-
-  // Modify init structs and initialize
-  init.warmup = iadcWarmupKeepWarm;
-
-  // Set the HFSCLK prescale value here
-  init.srcClkPrescale = IADC_calcSrcClkPrescale(IADC0, CLK_SRC_ADC_FREQ, 0);
-
-  // Configuration 0 is used by both scan and single conversions by default
-  // Use unbuffered AVDD as reference
-  initAllConfigs.configs[0].reference = iadcCfgReferenceVddx;
-
-  // Divides CLK_SRC_ADC to set the CLK_ADC frequency for desired sample rate
-  initAllConfigs.configs[0].adcClkPrescale = IADC_calcAdcClkPrescale(IADC0,
-                                                                    CLK_ADC_FREQ,
-                                                                    0,
-                                                                    iadcCfgModeNormal,
-                                                                    init.srcClkPrescale);
-
-  // Set oversampling rate to 32x
-  // resolution formula res = 11 + log2(oversampling * digital averaging)
-  // in this case res = 11 + log2(32*1) = 16
-  initAllConfigs.configs[0].osrHighSpeed = iadcCfgOsrHighSpeed32x;
-
-
-  // Single initialization
-  initSingle.dataValidLevel = _IADC_SINGLEFIFOCFG_DVL_VALID1;
-
-  // Set conversions to run continuously
-  initSingle.triggerAction = iadcTriggerActionOnce;//iadcTriggerActionContinuous; //
-
-  // Set alignment to right justified with 16 bits for data field
-  initSingle.alignment = iadcAlignRight16;
-
-  // Configure Input sources for single ended conversion
-  initSingleInput.posInput = iadcPosInputPortCPin2;
-  initSingleInput.negInput = iadcNegInputGnd;
-
-  // Initialize IADC
-  // Note oversampling and digital averaging will affect the offset correction
-  // This is taken care of in the IADC_init() function in the emlib
-  IADC_init(IADC0, &init, &initAllConfigs);
-
-  // Initialize Scan
-  IADC_initSingle(IADC0, &initSingle, &initSingleInput);
-
-  // Allocate the analog bus for ADC0 inputs
-  GPIO->IADC_INPUT_BUS |= IADC_INPUT_BUSALLOC;
-
-  // Enable interrupts on data valid level
-  IADC_enableInt(IADC0, IADC_IEN_SINGLEFIFODVL);
-
-  // Enable ADC interrupts
-  NVIC_ClearPendingIRQ(IADC_IRQn);
-  NVIC_EnableIRQ(IADC_IRQn);
-}
-
-/**************************************************************************//**
- * @brief  ADC Handler
- *****************************************************************************/
-void IADC_IRQHandler(void)
-{
-  GPIO_PinOutClear(gpioPortC, 0);
-  // Read data from the FIFO, 16-bit result
-  sample = IADC_pullSingleFifoResult(IADC0);
-
-
-//  // For single-ended the result range is 0 to +Vref, i.e., 16 bits for the
-//  // conversion value.
-//  singleResult = sample.data * 3.3 / 0xFFFF;
-//
-//  app_log("Raw = %d, Voltage = %f \n\r", sample, (float)singleResult);
-
-  IADC_clearInt(IADC0, IADC_IF_SINGLEFIFODVL);
-
-  sl_bt_external_signal(ADC_INT_IRQ);
-}
-
-/**************************************************************************//**
- * Application Init.
- *****************************************************************************/
-SL_WEAK void app_init(void)
-{
-  /////////////////////////////////////////////////////////////////////////////
-  // Put your additional application init code here!                         //
-  // This is called once during start-up.                                    //
-  /////////////////////////////////////////////////////////////////////////////
-
-  // Initialize GPIO
-  initGPIO();
-
-  // Initialize PRS
-  initPRS();
-
-//  // Initialize the IADC
-  initIADC();
-//
-  //app_log("ADC Initialized\n\r");
-//
-//  // Start single
-  IADC_command(IADC0, iadcCmdStartSingle);
-}
 
 /**************************************************************************//**
  * Application Process Action.
@@ -243,6 +48,17 @@ SL_WEAK void app_process_action(void)
   // Do not call blocking functions from here!                               //
   /////////////////////////////////////////////////////////////////////////////
 }
+
+/**************************************************************************//**
+ * Application Init.
+ *****************************************************************************/
+SL_WEAK void app_init(void)
+{
+
+  init_SoilMoisture();
+
+}
+
 
 /**************************************************************************//**
  * Bluetooth stack event handler.
@@ -307,8 +123,15 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         sl_bt_advertiser_connectable_scannable);
       app_assert_status(sc);
       //app_log("advertising \n\r");
-      //Set a continuous Timer to drive the Central App State Machine
-            sl_bt_system_set_soft_timer(1*32768, IADC_SOFTTIMER_HANDLER, 0);
+
+      Measure_SoilMoisture();
+
+      //Set a continuous Timer to probe the sensor Moisture
+     // sl_bt_system_set_soft_timer(SENSOR_SAMPLING_TIME*32768, IADC_SOFTTIMER_HANDLER, 0);
+      sl_bt_system_set_soft_timer(1*32768, IADC_SOFTTIMER_HANDLER, 0);
+      //sc = sl_bt_connection_set_default_parameters(2000, 2000, 0, 1000, 0, 65535);
+      app_assert_status(sc);
+
       break;
 
 
@@ -322,7 +145,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
          //app_log("Raw Sensor Value = %d\n\r", sample.data);
 
-         Sensor_data.data = sample.data;
+
+         Sensor_data.data = Get_SensMoistData();
 
          //Writes ADC Data to the Gattdb Characteristic
          sc = sl_bt_gatt_server_write_attribute_value(gattdb_SoilHumData,
@@ -341,14 +165,17 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
     if (evt->data.evt_system_soft_timer.handle == IADC_SOFTTIMER_HANDLER)
            {
-              GPIO_PinOutSet(gpioPortC, 0);
-              IADC_command(IADC0,iadcCmdStartSingle);
-              //app_log("triggering ADC \n\r");
+              Measure_SoilMoisture();
            }
     break;
     // -------------------------------
     // This event indicates that a new connection was opened.
     case sl_bt_evt_connection_opened_id:
+
+      //sc = sl_bt_connection_set_parameters(evt->data.evt_connection_parameters.connection, 2000, 2000, 0, 1000, 0, 65535);
+
+      sc = sl_bt_connection_set_parameters(1, 2000, 2000, 0, 1000, 0, 65535);
+      app_assert_status(sc);
       break;
 
     // -------------------------------
