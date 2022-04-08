@@ -20,6 +20,7 @@ sdk: {id: gecko_sdk, version: 4.0.2}
 toolchain_settings: []
 component:
 - {id: emlib_iadc}
+- {id: emlib_ldma}
 - {id: bluetooth_feature_connection}
 - {id: bluetooth_feature_gatt_server}
 - {id: bluetooth_feature_advertiser}
@@ -28,6 +29,7 @@ component:
 - {id: bluetooth_feature_system}
 - {id: gatt_configuration}
 - {id: bluetooth_feature_scanner}
+- {id: emlib_letimer}
 - {id: bluetooth_stack}
 - {id: component_catalog}
 - {id: ota_dfu}

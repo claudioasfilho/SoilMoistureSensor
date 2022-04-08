@@ -1,0 +1,604 @@
+/*
+ * SoilMoisture.c
+ *
+ *  Created on: Apr 8, 2022
+ *      Author: clfilho
+ */
+
+
+
+//IADC
+#include "sl_bluetooth.h"
+#include "sl_sleeptimer.h"
+#include <stdio.h>
+#include "em_device.h"
+#include "em_chip.h"
+#include "em_cmu.h"
+#include "em_emu.h"
+#include "em_iadc.h"
+#include "em_gpio.h"
+#include "em_prs.h"
+#include "em_letimer.h"
+#include "em_ldma.h"
+#include "SoilMoisture.h"
+
+
+/***************************************************************************//**
+ * @brief
+ *    IADC Configuration Definitions.
+ ******************************************************************************/
+// Set CLK_ADC to 10kHz (this corresponds to a sample rate of 1ksps)
+#define CLK_SRC_ADC_FREQ          5000000  // CLK_SRC_ADC; largest division is by 4
+#define CLK_ADC_FREQ              1000000  // CLK_ADC; IADC_SCHEDx PRESCALE has 10 valid bits
+
+// When changing GPIO port/pins above, make sure to change xBUSALLOC macro's
+// accordingly.
+#define IADC_INPUT_BUS            ABUSALLOC
+#define IADC_INPUT_BUSALLOC       GPIO_ABUSALLOC_AEVEN0_ADC0
+
+// IADC input GPIO port/pin configration
+#define IADC_INPUT_POS            iadcPosInputPortCPin2
+#define IADC_INPUT_NEG            iadcNegInputGnd
+
+/***************************************************************************//**
+ * @brief
+ *    GPIO
+ ******************************************************************************/
+
+#define SENSOR_POWER_PORT gpioPortC
+#define SENSOR_POWER_PIN  1
+
+/***************************************************************************//**
+ * @brief
+ *    PRS Configuration Definitions.
+ ******************************************************************************/
+// Note CH7 is used by the BLE stack.
+#define PRS_CHANNEL_LETIMER_IADC  1
+#define PRS_CHANNEL_LETIMER_GPIO  2
+
+
+
+/***************************************************************************//**
+ * @brief
+ *    LDMA Configuration Definitions.
+ ******************************************************************************/
+#define LDMA_CHANNEL              0
+
+
+/***************************************************************************//**
+ * @brief
+ *    Private general globals.
+ ******************************************************************************/
+static uint16_t samplingBuffer[NUM_OF_SAMPLES];
+
+static bool startedSampling = false;
+
+
+
+/***************************************************************************//**
+ * @brief
+ *    Private LDMA globals.
+ ******************************************************************************/
+// Configure LDMA to trigger from IADC peripheral
+static LDMA_TransferCfg_t xferCfg = LDMA_TRANSFER_CFG_PERIPHERAL(ldmaPeripheralSignal_IADC0_IADC_SINGLE);
+
+static LDMA_Descriptor_t descriptor = LDMA_DESCRIPTOR_LINKREL_P2M_WORD(&(IADC0->SINGLEFIFODATA), // src
+                                                                      samplingBuffer,            // dest
+                                                                      NUM_OF_SAMPLES,      // number of samples to transfer
+                                                                      1);
+
+
+
+/***************************************************************************//**
+ * @brief
+ *    Private static init functions of different peripherals.
+ ******************************************************************************/
+static void init_clocks(void);
+static void init_letimer(void);
+static void init_iadc(void);
+static void init_prs(void);
+static void init_ldma(void);
+void Sensor_power_timer_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
+int start_Sensor_power_timer(void);
+
+
+
+void Sensor_power_timer_callback(sl_sleeptimer_timer_handle_t *handle, void *data)
+{
+  GPIO_PinOutClear(SENSOR_POWER_PORT, SENSOR_POWER_PIN);
+}
+
+int start_Sensor_power_timer(void)
+{
+  sl_status_t status;
+  sl_sleeptimer_timer_handle_t my_timer;
+  uint32_t timer_timeout = 5;
+
+  GPIO_PinOutSet(SENSOR_POWER_PORT, SENSOR_POWER_PIN);
+
+  status = sl_sleeptimer_start_timer(&my_timer,
+                                     timer_timeout,
+                                     Sensor_power_timer_callback,
+                                     (void *)NULL,
+                                     0,
+                                     0);
+  if(status != SL_STATUS_OK) {
+    return -1;
+  }
+  return 1;
+}
+
+/***************************************************************************//**
+ * @brief
+ *    Initialize the low energy peripherals to measure the voltage of a pin.
+ *
+ * @details
+ *    The LETIMER, PRS, IADC, and LDMA peripherals are initialized. The
+ *    LETIMER's underflow event will be connected to the IADC start conversion
+ *    trigger through PRS. The LDMA will transfer the data to a buffer when the
+ *    IADC conversion is complete.
+ *
+ * @note
+ *    The LDMA will not begin transferring the data after initialization. The
+ *    le_voltage_monitor_start_next() function must be called to start
+ *    measuring data.
+ ******************************************************************************/
+
+
+void init_SoilMoisture(void)
+{
+  // Initialize GPIO
+  init_clocks();
+  initGPIO();
+
+  init_letimer();
+  init_prs();
+  init_iadc();
+  init_ldma();
+
+}
+
+
+/***************************************************************************//**
+ * @brief
+ *    Initialize all the clocks used for the peripherals.
+ ******************************************************************************/
+static void init_clocks(void)
+{
+  // Enable GPIO clock
+  CMU_ClockEnable(cmuClock_GPIO, true);
+
+  // Select LETimer0 clock to run off LFXO
+  // Reference: EFR32xG22 RM, Figure 8.3
+  CMU_ClockSelectSet(cmuClock_EM23GRPACLK, cmuSelect_LFXO);
+
+  // Enable LETimer0 clock
+  CMU_ClockEnable(cmuClock_LETIMER0, true);
+
+  // Enable PRS clock
+  CMU_ClockEnable(cmuClock_PRS, true);
+
+  // Configure IADC clock source for use while in EM2
+  // Reference: EFR32xG22 RM, Figure 8.2
+  CMU_ClockSelectSet(cmuClock_IADCCLK, cmuSelect_FSRCO);  // FSRCO - 20MHz
+
+  // Enable IADC0 clock
+  CMU_ClockEnable(cmuClock_IADC0, true);
+
+  // Enable LDMA clock
+  CMU_ClockEnable(cmuClock_LDMA, true);
+
+}
+
+
+/***************************************************************************//**
+ * @brief
+ *    Initialize LETimer.
+ ******************************************************************************/
+static void init_letimer(void)
+{
+  // Declare init struct
+  LETIMER_Init_TypeDef init = LETIMER_INIT_DEFAULT;
+
+  // Initialize letimer to run in free running mode
+  // Reference: EFR32xG22 RM, Section 18.3.2
+  init.repMode = letimerRepeatFree;
+
+  // Pulse output for PRS
+  init.ufoa0 = letimerUFOAPulse;
+
+  // Set frequency
+  init.topValue = CMU_ClockFreqGet(cmuClock_LETIMER0) / SAMPLING_FREQ_HZ;
+
+  // Disable letimer
+  init.enable = false;
+  init.debugRun = true;
+
+  // Initialize free-running letimer
+  LETIMER_Init(LETIMER0, &init);
+}
+
+
+/***************************************************************************//**
+ * @brief
+ *    Initialize PRS.
+ ******************************************************************************/
+static void init_prs(void)
+{
+  // Producer
+  PRS_SourceAsyncSignalSet(PRS_CHANNEL_LETIMER_IADC,
+                           PRS_ASYNC_CH_CTRL_SOURCESEL_LETIMER0,
+                           PRS_ASYNC_CH_CTRL_SIGSEL_LETIMER0CH0);
+
+  // Consumer
+  PRS_ConnectConsumer(PRS_CHANNEL_LETIMER_IADC,
+                      prsTypeAsync,
+                      prsConsumerIADC0_SINGLETRIGGER);
+
+
+//  PRS_SourceAsyncSignalSet(PRS_CHANNEL_LETIMER_GPIO,
+//                            PRS_ASYNC_CH_CTRL_SOURCESEL_LETIMER0,
+//                            PRS_ASYNC_CH_CTRL_SIGSEL_LETIMER0CH0);
+//
+//  PRS_PinOutput(PRS_CHANNEL_LETIMER_GPIO,prsTypeAsync, SENSOR_POWER_PORT, SENSOR_POWER_PIN);
+}
+
+
+/***************************************************************************//**
+ * @brief
+ *    Initialize IADC.
+ ******************************************************************************/
+static void init_iadc(void)
+{
+  // Declare init structs
+  IADC_Init_t init = IADC_INIT_DEFAULT;
+  IADC_AllConfigs_t initAllConfigs = IADC_ALLCONFIGS_DEFAULT;
+  IADC_InitSingle_t initSingle = IADC_INITSINGLE_DEFAULT;
+  IADC_SingleInput_t initSingleInput = IADC_SINGLEINPUT_DEFAULT;
+
+  // Reset IADC to reset configuration in case it has been modified
+  IADC_reset(IADC0);
+
+  // Reference: EFR32xG22 RM, Section 24.3.3.1
+  init.warmup = iadcWarmupKeepWarm;//iadcWarmupNormal;
+
+  // Set the HFSCLK prescale value here
+  init.srcClkPrescale = IADC_calcSrcClkPrescale(IADC0, CLK_SRC_ADC_FREQ, 0);
+
+  // Configuration 0 is used by both scan and single conversions by default
+  // Use unbuffered AVDD as reference
+  initAllConfigs.configs[0].reference = iadcCfgReferenceVddx;
+
+  // Divides CLK_SRC_ADC to set the CLK_ADC frequency for desired sample rate
+  // Default oversampling (OSR) is 2x, and Conversion Time = ((4 * OSR) + 2) / fCLK_ADC
+  initAllConfigs.configs[0].adcClkPrescale = IADC_calcAdcClkPrescale(IADC0,
+                                                                    CLK_ADC_FREQ,
+                                                                    0,
+                                                                    iadcCfgModeNormal,
+                                                                    init.srcClkPrescale);
+
+  // Set oversampling rate to 32x
+   // resolution formula res = 11 + log2(oversampling * digital averaging)
+   // in this case res = 11 + log2(32*1) = 16
+  // initAllConfigs.configs[0].osrHighSpeed = iadcCfgOsrHighSpeed32x;
+
+  // === PRS Connection Config =======
+  // On every trigger, start conversion
+  initSingle.triggerAction = iadcTriggerActionOnce;
+
+  // Set conversions to trigger from letimer/PRS
+  initSingle.triggerSelect = iadcTriggerSelPrs0PosEdge;
+
+  // === LDMA Connection Config ======
+  // Wake up the DMA when FIFO is filled
+  initSingle.fifoDmaWakeup = true;
+
+  // Set how many elements in FIFO will generate DMA request
+  initSingle.dataValidLevel = iadcFifoCfgDvl1;  // Use _IADC_SCANFIFOCFG_DVL_VALID1 for GSDK 3.0
+
+  // Set alignment to right justified with 16 bits for data field
+  initSingle.alignment = iadcAlignRight16;
+
+  // === Pin Input Config ============
+  // Configure Input sources for single ended conversion
+  initSingleInput.posInput = IADC_INPUT_POS;
+  initSingleInput.negInput = IADC_INPUT_NEG;
+
+  // Allocate the analog bus for IADC0 input
+  GPIO->IADC_INPUT_BUS |= IADC_INPUT_BUSALLOC;
+
+  // Initialize IADC
+  IADC_init(IADC0, &init, &initAllConfigs);
+
+  // Initialize Single
+  IADC_initSingle(IADC0, &initSingle, &initSingleInput);
+}
+
+
+/***************************************************************************//**
+ * @brief
+ *    Initialize LDMA.
+ ******************************************************************************/
+static void init_ldma(void)
+{
+  // Declare init struct
+  LDMA_Init_t init = LDMA_INIT_DEFAULT;
+
+  // Initialize LDMA
+  LDMA_Init(&init);
+
+  // Number of DMA transfers
+  descriptor.xfer.xferCnt = NUM_OF_SAMPLES;
+
+  // Trigger interrupt when samplingBuffer is filled
+  descriptor.xfer.doneIfs = true;
+
+  // Enable LDMA Interrupt
+  NVIC_ClearPendingIRQ(LDMA_IRQn);
+  NVIC_EnableIRQ(LDMA_IRQn);
+}
+
+/**************************************************************************//**
+ * @brief  GPIO Initializer
+ *****************************************************************************/
+void initGPIO(void)
+{
+
+  GPIO_PinModeSet(SENSOR_POWER_PORT, SENSOR_POWER_PIN, gpioModePushPull, 0);
+
+  //Turning Off everything else on the board
+
+  //Turn Off temp/Hum Sensor
+  GPIO_PinModeSet(gpioPortC, 6, gpioModePushPull, 0);
+  //Turn Off MIC
+  GPIO_PinModeSet(gpioPortC, 7, gpioModePushPull, 0);
+  //Turn Off SPI FLASH
+  GPIO_PinModeSet(gpioPortC, 6, gpioModePushPull, 1);
+  //Turn Off IMU
+  GPIO_PinModeSet(gpioPortB, 4, gpioModePushPull, 0);
+
+}
+
+/***************************************************************************//**
+ * @brief
+ *    LDMA Interrupt Handler
+ ******************************************************************************/
+void LDMA_IRQHandler(void)
+{
+
+
+  // Clear interrupts
+  LDMA_IntClear(LDMA_IntGet());
+
+  // Stop timer
+  LETIMER_Enable(LETIMER0, false);
+
+  // Stop ADC
+  IADC_command(IADC0, iadcCmdStopSingle);
+
+  // Signal ble stack that LDMA has finished
+  sl_bt_external_signal(LE_MONITOR_SIGNAL);
+
+  // Set flag to indicate sampling finished
+  startedSampling = false;
+}
+
+
+
+void Measure_SoilMoisture(void)
+{
+
+
+  if(!startedSampling) {
+
+    IADC_command(IADC0, iadcCmdStartSingle);
+
+    // Start timer
+    LETIMER_Enable(LETIMER0, true);
+
+    // Start LDMA
+    LDMA_StartTransfer(LDMA_CHANNEL, &xferCfg, &descriptor);
+
+    //The GPIO will power the sensor, and it will be disbaled on the ADC IRQ
+  //  start_Sensor_power_timer();
+
+    // Set flag to indicate sampling is occuring.
+    startedSampling = true;
+  }
+
+}
+
+
+uint32_t Get_SensMoistData(void)
+{
+
+  uint32_t avg = 0;
+    for(int32_t i = 0; i < NUM_OF_SAMPLES; i++) {
+      avg += samplingBuffer[i];
+    }
+
+
+  return avg;
+}
+
+#if 0
+/*******************************************************************************
+ *******************************   DEFINES   ***********************************
+ ******************************************************************************/
+
+// Set CLK_ADC to 10MHz (this corresponds to a sample rate of 77K with OSR = 32)
+// CLK_SRC_ADC; largest division is by 4
+#define CLK_SRC_ADC_FREQ        40000
+
+// CLK_ADC; IADC_SCHEDx PRESCALE has 10 valid bits
+#define CLK_ADC_FREQ            10000
+
+// When changing GPIO port/pins above, make sure to change xBUSALLOC macro's
+// accordingly.
+#define IADC_INPUT_BUS          CDBUSALLOC
+#define IADC_INPUT_BUSALLOC     GPIO_CDBUSALLOC_CDEVEN0_ADC0
+
+
+
+/*******************************************************************************
+ ***************************   GLOBAL VARIABLES   ******************************
+ ******************************************************************************/
+
+// Stores latest ADC sample and converts to volts
+static volatile IADC_Result_t sample;
+static volatile double singleResult;
+
+/**************************************************************************//**
+ * @brief  GPIO Initializer
+ *****************************************************************************/
+void initGPIO(void)
+{
+  // Enable GPIO clock branch
+  CMU_ClockEnable(cmuClock_GPIO, true);
+
+  // Configure PB1 as output, will indicate when conversions are being performed
+  GPIO_PinModeSet(gpioPortC, 0, gpioModePushPull, 0);
+  GPIO_PinModeSet(SENSOR_POWER_PORT, SENSOR_POWER_PIN, gpioModePushPull, 0);
+
+  //Turning Off everything else on the board
+
+  //Turn Off temp/Hum Sensor
+  GPIO_PinModeSet(gpioPortC, 6, gpioModePushPull, 0);
+  //Turn Off MIC
+  GPIO_PinModeSet(gpioPortC, 7, gpioModePushPull, 0);
+  //Turn Off SPI FLASH
+  GPIO_PinModeSet(gpioPortC, 6, gpioModePushPull, 1);
+  //Turn Off IMU
+  GPIO_PinModeSet(gpioPortB, 4, gpioModePushPull, 0);
+
+
+
+}
+
+/**************************************************************************//**
+ * @brief  PRS Initializer
+ *****************************************************************************/
+void initPRS(void)
+{
+  // Enable PRS clock
+  CMU_ClockEnable(cmuClock_PRS, true);
+
+  // Connect PRS Async channel 0 to ADC single complete signal
+  PRS_SourceAsyncSignalSet(0, PRS_ASYNC_CH_CTRL_SOURCESEL_IADC0,
+                           PRS_ASYNC_CH_CTRL_SIGSEL_IADC0SINGLEDONE);
+
+  // Route PRS channel 0 to PB1 to indicate a conversion complete
+  PRS_PinOutput(0,prsTypeAsync, gpioPortC, 0);
+}
+
+/**************************************************************************//**
+ * @brief  IADC Initializer
+ *****************************************************************************/
+void initIADC(void)
+{
+  // Declare init structs
+  IADC_Init_t init = IADC_INIT_DEFAULT;
+  IADC_AllConfigs_t initAllConfigs = IADC_ALLCONFIGS_DEFAULT;
+  IADC_InitSingle_t initSingle = IADC_INITSINGLE_DEFAULT;
+  IADC_SingleInput_t initSingleInput = IADC_SINGLEINPUT_DEFAULT;
+
+  // Enable IADC clock
+  CMU_ClockEnable(cmuClock_IADC0, true);
+
+  // Reset IADC to reset configuration in case it has been modified
+  IADC_reset(IADC0);
+
+  // Configure IADC clock source for use while in EM2
+//  CMU_ClockSelectSet(cmuClock_IADCCLK, cmuSelect_FSRCO);
+
+  // Modify init structs and initialize
+  init.warmup = iadcWarmupKeepWarm;
+
+  // Set the HFSCLK prescale value here
+  init.srcClkPrescale = IADC_calcSrcClkPrescale(IADC0, CLK_SRC_ADC_FREQ, 0);
+
+  // Configuration 0 is used by both scan and single conversions by default
+  // Use unbuffered AVDD as reference
+  initAllConfigs.configs[0].reference = iadcCfgReferenceVddx;
+
+  // Divides CLK_SRC_ADC to set the CLK_ADC frequency for desired sample rate
+  initAllConfigs.configs[0].adcClkPrescale = IADC_calcAdcClkPrescale(IADC0,
+                                                                    CLK_ADC_FREQ,
+                                                                    0,
+                                                                    iadcCfgModeNormal,
+                                                                    init.srcClkPrescale);
+
+  // Set oversampling rate to 32x
+  // resolution formula res = 11 + log2(oversampling * digital averaging)
+  // in this case res = 11 + log2(32*1) = 16
+  initAllConfigs.configs[0].osrHighSpeed = iadcCfgOsrHighSpeed32x;
+
+
+  // Single initialization
+  initSingle.dataValidLevel = _IADC_SINGLEFIFOCFG_DVL_VALID1;
+
+  // Set conversions to run continuously
+  initSingle.triggerAction = iadcTriggerActionOnce;//iadcTriggerActionContinuous; //
+
+  // Set alignment to right justified with 16 bits for data field
+  initSingle.alignment = iadcAlignRight16;
+
+  // Configure Input sources for single ended conversion
+  initSingleInput.posInput = iadcPosInputPortCPin2;
+  initSingleInput.negInput = iadcNegInputGnd;
+
+  // Initialize IADC
+  // Note oversampling and digital averaging will affect the offset correction
+  // This is taken care of in the IADC_init() function in the emlib
+  IADC_init(IADC0, &init, &initAllConfigs);
+
+  // Initialize Scan
+  IADC_initSingle(IADC0, &initSingle, &initSingleInput);
+
+  // Allocate the analog bus for ADC0 inputs
+  GPIO->IADC_INPUT_BUS |= IADC_INPUT_BUSALLOC;
+
+  // Enable interrupts on data valid level
+  IADC_enableInt(IADC0, IADC_IEN_SINGLEFIFODVL);
+
+  // Enable ADC interrupts
+  NVIC_ClearPendingIRQ(IADC_IRQn);
+  NVIC_EnableIRQ(IADC_IRQn);
+}
+
+
+/**************************************************************************//**
+ * @brief  ADC Handler
+ *****************************************************************************/
+void IADC_IRQHandler(void)
+{
+
+  GPIO_PinOutClear(SENSOR_POWER_PORT, SENSOR_POWER_PIN);
+  // Read data from the FIFO, 16-bit result
+  sample = IADC_pullSingleFifoResult(IADC0);
+
+  IADC_clearInt(IADC0, IADC_IF_SINGLEFIFODVL);
+
+  sl_bt_external_signal(ADC_INT_IRQ);
+}
+
+void Measure_SoilMoisture(void)
+{
+
+  //The GPIO will power the sensor, and it will be disbaled on the ADC IRQ
+  GPIO_PinOutSet(SENSOR_POWER_PORT, SENSOR_POWER_PIN);
+  //It triggers the ADC for reading
+  IADC_command(IADC0,iadcCmdStartSingle);
+
+  //app_log("triggering ADC \n\r");
+
+}
+
+uint32_t Get_SensMoistData(void)
+{
+  return sample.data;
+}
+
+
+
+#endif //If 0
